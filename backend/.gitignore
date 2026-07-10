@@ -1,0 +1,17 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.Python
+
+# Env / secrets
+.env
+
+# Vector DB data (regenerated at runtime)
+data/chroma_db/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
