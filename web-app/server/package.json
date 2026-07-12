@@ -1,0 +1,19 @@
+{
+  "name": "padhaimate-node-server",
+  "version": "1.0.0",
+  "description": "Express BFF (backend-for-frontend) for PadhaiMate AI. Proxies requests to the FastAPI RAG backend and adds a local chat-history feature.",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "form-data": "^4.0.1",
+    "multer": "^1.4.5-lts.1"
+  }
+}
