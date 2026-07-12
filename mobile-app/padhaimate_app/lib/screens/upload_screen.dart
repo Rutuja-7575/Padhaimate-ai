@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
@@ -11,11 +12,26 @@ class UploadScreen extends StatefulWidget {
   State<UploadScreen> createState() => _UploadScreenState();
 }
 
-class _UploadScreenState extends State<UploadScreen> {
+class _UploadScreenState extends State<UploadScreen> with SingleTickerProviderStateMixin {
   PlatformFile? _pickedFile;
   bool _uploading = false;
   String? _statusMessage;
   bool _statusIsError = false;
+  bool _hovering = false;
+
+  late final AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(
@@ -63,135 +79,194 @@ class _UploadScreenState extends State<UploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'ADD A DOCUMENT',
-            style: TextStyle(
-              color: AppColors.textMuted,
-              fontSize: 12,
-              letterSpacing: 2,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'Step 01',
-            style: TextStyle(color: AppColors.textMuted, fontSize: 18),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Upload a PDF',
-            style: TextStyle(
-              color: AppColors.purple,
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 20),
-          InkWell(
-            onTap: _uploading ? null : _pickFile,
-            borderRadius: BorderRadius.circular(12),
-            child: DottedBorderBox(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 16),
-                child: Column(
-                  children: [
-                    const Icon(Icons.arrow_upward, color: AppColors.lime, size: 28),
-                    const SizedBox(height: 12),
-                    Text(
-                      _pickedFile == null
-                          ? 'Drag a PDF here, or click to browse'
-                          : _pickedFile!.name,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 15),
+    final hasFile = _pickedFile != null;
+
+    return Stack(
+      children: [
+        // Decorative background blobs
+        Positioned(
+          top: -60,
+          right: -40,
+          child: _blob(AppColors.purple.withOpacity(0.25), 180),
+        ),
+        Positioned(
+          top: 180,
+          left: -50,
+          child: _blob(AppColors.lime.withOpacity(0.15), 140),
+        ),
+        SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Turn your notes into answers',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Upload a PDF',
+                style: TextStyle(color: AppColors.textPrimary, fontSize: 28, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 24),
+              GestureDetector(
+                onTap: _uploading ? null : _pickFile,
+                child: MouseRegion(
+                  onEnter: (_) => setState(() => _hovering = true),
+                  onExit: (_) => setState(() => _hovering = false),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: AppColors.cardDark,
+                      border: Border.all(
+                        color: hasFile
+                            ? AppColors.lime
+                            : (_hovering ? AppColors.purple : AppColors.border),
+                        width: hasFile || _hovering ? 1.5 : 1,
+                      ),
+                      boxShadow: hasFile ? AppShadows.glow(AppColors.lime) : [],
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Only .pdf files are supported',
-                      style: TextStyle(color: AppColors.textMuted, fontSize: 12),
+                    child: Column(
+                      children: [
+                        AnimatedBuilder(
+                          animation: _pulseController,
+                          builder: (context, child) {
+                            final scale = hasFile ? 1.0 : 1.0 + (_pulseController.value * 0.08);
+                            return Transform.scale(scale: scale, child: child);
+                          },
+                          child: Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: hasFile ? AppGradients.limeGlow : AppGradients.purpleGlow,
+                              boxShadow: AppShadows.glow(hasFile ? AppColors.lime : AppColors.purple),
+                            ),
+                            child: Icon(
+                              hasFile ? Icons.picture_as_pdf_rounded : Icons.cloud_upload_rounded,
+                              color: hasFile ? Colors.black : Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          hasFile ? _pickedFile!.name : 'Tap to choose a PDF',
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          hasFile
+                              ? '${(_pickedFile!.size / 1024).toStringAsFixed(0)} KB • ready to upload'
+                              : 'PDF files only • max a few MB',
+                          style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                        ),
+                        if (hasFile) ...[
+                          const SizedBox(height: 14),
+                          TextButton.icon(
+                            onPressed: () => setState(() => _pickedFile = null),
+                            icon: const Icon(Icons.close_rounded, size: 16, color: AppColors.textMuted),
+                            label: const Text('Remove', style: TextStyle(color: AppColors.textMuted)),
+                          ),
+                        ],
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.lime,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: hasFile ? AppColors.lime : AppColors.border,
+                    foregroundColor: Colors.black,
+                    elevation: hasFile ? 6 : 0,
+                    shadowColor: AppColors.lime.withOpacity(0.5),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  onPressed: (_uploading || !hasFile) ? (hasFile ? _upload : null) : _upload,
+                  child: _uploading
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.black),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.bolt_rounded, color: hasFile ? Colors.black : AppColors.textMuted),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Upload & analyze',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                                color: hasFile ? Colors.black : AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
               ),
-              onPressed: _uploading ? null : _upload,
-              child: _uploading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
-                    )
-                  : const Text('Upload document', style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
+              if (_statusMessage != null) ...[
+                const SizedBox(height: 18),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: (_statusIsError ? Colors.redAccent : AppColors.onlineGreen).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: (_statusIsError ? Colors.redAccent : AppColors.onlineGreen).withOpacity(0.4),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _statusIsError ? Icons.error_outline_rounded : Icons.check_circle_rounded,
+                        color: _statusIsError ? Colors.redAccent : AppColors.onlineGreen,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _statusMessage!,
+                          style: TextStyle(color: _statusIsError ? Colors.redAccent : AppColors.onlineGreen),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
           ),
-          if (_statusMessage != null) ...[
-            const SizedBox(height: 16),
-            Text(
-              _statusMessage!,
-              style: TextStyle(color: _statusIsError ? Colors.redAccent : AppColors.onlineGreen),
-            ),
-          ],
-        ],
+        ),
+      ],
+    );
+  }
+
+  Widget _blob(Color color, double size) {
+    return ClipRRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+        ),
       ),
     );
   }
-}
-
-/// Simple dashed-border container to mimic the web app's dropzone.
-class DottedBorderBox extends StatelessWidget {
-  final Widget child;
-  const DottedBorderBox({super.key, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _DashedBorderPainter(),
-      child: child,
-    );
-  }
-}
-
-class _DashedBorderPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.border
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
-
-    const dashWidth = 6.0;
-    const dashSpace = 4.0;
-    final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      const Radius.circular(12),
-    );
-
-    final path = Path()..addRRect(rrect);
-    for (final metric in path.computeMetrics()) {
-      double distance = 0;
-      while (distance < metric.length) {
-        final next = distance + dashWidth;
-        canvas.drawPath(metric.extractPath(distance, next), paint);
-        distance = next + dashSpace;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

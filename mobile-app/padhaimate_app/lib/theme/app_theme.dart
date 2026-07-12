@@ -68,3 +68,37 @@ class AppTheme {
   }
 }
 
+class AppGradients {
+  static const header = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF171B2E), Color(0xFF0A0D17)],
+  );
+
+  static const limeGlow = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [AppColors.lime, Color(0xFFB8E82F)],
+  );
+
+  static const purpleGlow = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [AppColors.purple, Color(0xFF6E5FE0)],
+  );
+}
+
+class AppShadows {
+  static List<BoxShadow> card = [
+    BoxShadow(
+      color: Colors.black.withOpacity(0.35),
+      blurRadius: 16,
+      offset: const Offset(0, 6),
+    ),
+  ];
+
+  static List<BoxShadow> glow(Color color) => [
+        BoxShadow(color: color.withOpacity(0.35), blurRadius: 20, spreadRadius: 1),
+      ];
+}
+

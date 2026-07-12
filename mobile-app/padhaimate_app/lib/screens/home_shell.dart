@@ -17,6 +17,12 @@ class _HomeShellState extends State<HomeShell> {
   bool? _backendOk;
   int _refreshTrigger = 0;
 
+  final _destinations = const [
+    (icon: Icons.upload_file_rounded, label: 'Upload'),
+    (icon: Icons.chat_bubble_rounded, label: 'Chat'),
+    (icon: Icons.folder_rounded, label: 'Library'),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -48,70 +54,104 @@ class _HomeShellState extends State<HomeShell> {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 16,
-        title: Row(
-          children: [
-            const Text(
-              'Padhai',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-                color: AppColors.textPrimary,
-              ),
+      extendBody: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(64),
+        child: Container(
+          decoration: const BoxDecoration(gradient: AppGradients.header),
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            titleSpacing: 16,
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    gradient: AppGradients.limeGlow,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: AppShadows.glow(AppColors.lime),
+                  ),
+                  child: const Icon(Icons.auto_stories_rounded, color: Colors.black, size: 20),
+                ),
+                const SizedBox(width: 10),
+                const Text(
+                  'PadhaiMate',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19, color: AppColors.textPrimary),
+                ),
+                
+              ],
             ),
-            Container(
-              margin: const EdgeInsets.only(left: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.lime,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text(
-                'Mate AI',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontStyle: FontStyle.italic,
-                  fontSize: 16,
-                  color: Colors.black,
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Center(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _backendOk == null ? Colors.grey : (_backendOk! ? AppColors.onlineGreen : Colors.red),
+                      boxShadow: _backendOk == true ? AppShadows.glow(AppColors.onlineGreen) : [],
+                    ),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 10),
-            if (MediaQuery.of(context).size.width > 400)
-              const Text(
-                'RAG-powered document Q&A',
-                style: TextStyle(color: AppColors.textMuted, fontSize: 12),
-              ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Center(
-              child: Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: _backendOk == null
-                      ? Colors.grey
-                      : (_backendOk! ? AppColors.onlineGreen : Colors.red),
-                ),
-              ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
-      body: IndexedStack(index: _selectedIndex, children: screens),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (i) => setState(() => _selectedIndex = i),
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.upload_file), label: 'Upload'),
-          NavigationDestination(icon: Icon(Icons.chat_bubble_outline), label: 'Chat'),
-          NavigationDestination(icon: Icon(Icons.folder_outlined), label: 'Library'),
-        ],
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        child: IndexedStack(key: ValueKey(_selectedIndex), index: _selectedIndex, children: screens),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: Container(
+          height: 68,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: AppColors.panelDark,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.border),
+            boxShadow: AppShadows.card,
+          ),
+          child: Row(
+            children: List.generate(_destinations.length, (i) {
+              final selected = i == _selectedIndex;
+              final dest = _destinations[i];
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedIndex = i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                    decoration: BoxDecoration(
+                      gradient: selected ? AppGradients.limeGlow : null,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(dest.icon, size: 20, color: selected ? Colors.black : AppColors.textMuted),
+                        const SizedBox(height: 2),
+                        Text(
+                          dest.label,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: selected ? Colors.black : AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
       ),
     );
   }
