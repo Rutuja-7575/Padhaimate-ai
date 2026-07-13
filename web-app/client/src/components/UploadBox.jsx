@@ -44,11 +44,11 @@ function UploadBox({ onUploadSuccess }) {
 
   return (
     <div className="card">
-      <span className="card-label">Step 01</span>
+      <div className="card-badge violet">📚</div>
       <h3>Upload a PDF</h3>
 
       <div
-        className={`dropzone ${dragging ? 'dragging' : ''}`}
+        className={`dropzone ${dragging ? 'dragging' : ''} ${file ? 'has-file' : ''}`}
         onClick={() => inputRef.current.click()}
         onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
         onDragLeave={() => setDragging(false)}
@@ -58,20 +58,23 @@ function UploadBox({ onUploadSuccess }) {
           pickFile(e.dataTransfer.files[0]);
         }}
       >
-        <div className="dropzone-icon">↑</div>
-        <div className="dropzone-text">Drag a PDF here, or click to browse</div>
-        <div className="dropzone-sub">Only .pdf files are supported</div>
+        <div className="dropzone-icon-circle">{file ? '📄' : '⬆'}</div>
+        <div className="dropzone-text">
+          {file ? file.name : 'Drag a PDF here, or click to browse'}
+        </div>
+        <div className="dropzone-sub">
+          {file ? `${(file.size / 1024).toFixed(0)} KB • ready to upload` : 'Only .pdf files are supported'}
+        </div>
         <input
           ref={inputRef}
           type="file"
           accept=".pdf"
           onChange={(e) => pickFile(e.target.files[0])}
         />
-        {file && <div className="file-chip">📄 {file.name}</div>}
       </div>
 
-      <button className="upload-btn" onClick={handleUpload} disabled={loading}>
-        {loading ? `Uploading… ${progress}%` : 'Upload document'}
+      <button className="upload-btn" onClick={handleUpload} disabled={loading || !file}>
+        {loading ? `Uploading… ${progress}%` : '⚡ Upload & analyze'}
       </button>
 
       {loading && (

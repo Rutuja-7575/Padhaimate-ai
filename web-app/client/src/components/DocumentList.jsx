@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getDocuments, deleteDocument } from '../services/api';
 
-const SPINE_COLORS = ['#9b8cff', '#d6ff3f', '#ff6f91', '#4ecdc4'];
+const SPINE_COLORS = ['violet', 'lime'];
 const spineFor = (name) => {
   const sum = [...name].reduce((a, c) => a + c.charCodeAt(0), 0);
   return SPINE_COLORS[sum % SPINE_COLORS.length];
@@ -27,6 +27,7 @@ function DocumentList({ refreshTrigger }) {
   useEffect(() => { fetchDocs(); }, [refreshTrigger]);
 
   const handleDelete = async (filename) => {
+    if (!window.confirm(`Remove "${filename}" from your library?`)) return;
     setDeletingFile(filename);
     try {
       await deleteDocument(filename);
@@ -40,7 +41,12 @@ function DocumentList({ refreshTrigger }) {
 
   return (
     <div className="card">
-      <span className="card-label">Step 02</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="card-badge lime">🗂️</div>
+        {docs.length > 0 && (
+          <span className="doc-count-pill">{docs.length} {docs.length === 1 ? 'doc' : 'docs'}</span>
+        )}
+      </div>
       <h3>Your Library</h3>
       {loading ? (
         <p className="muted-text">Loading…</p>
@@ -48,22 +54,36 @@ function DocumentList({ refreshTrigger }) {
         <div className="empty-state">Nothing here yet — upload a PDF to get started.</div>
       ) : (
         <ul className="doc-list">
-          {docs.map((doc) => (
-            <li key={doc.filename} className="doc-item" style={{ '--spine': spineFor(doc.filename) }}>
-              <div className="doc-info">
-                <span className="doc-name">{doc.filename}</span>
-                <span className="doc-chunks">{doc.chunks} chunks</span>
-              </div>
-              <button
-                className="delete-btn"
-                onClick={() => handleDelete(doc.filename)}
-                disabled={deletingFile === doc.filename}
-                title="Delete document"
-              >
-                {deletingFile === doc.filename ? '…' : '✕'}
-              </button>
-            </li>
-          ))}
+          {docs.map((doc) => {
+            const color = spineFor(doc.filename);
+            return (
+              <li key={doc.filename} className="doc-item">
+                <div
+                  className="doc-icon"
+                  style={{
+                    background: color === 'lime'
+                      ? 'linear-gradient(135deg, #d6ff3f, #b8e82f)'
+                      : 'linear-gradient(135deg, #9b8cff, #6e5fe0)',
+                    color: color === 'lime' ? '#0b0d17' : '#fff',
+                  }}
+                >
+                  📄
+                </div>
+                <div className="doc-info">
+                  <span className="doc-name">{doc.filename}</span>
+                  <span className="doc-chunks">{doc.chunks} chunks indexed</span>
+                </div>
+                <button
+                  className="delete-btn"
+                  onClick={() => handleDelete(doc.filename)}
+                  disabled={deletingFile === doc.filename}
+                  title="Delete document"
+                >
+                  {deletingFile === doc.filename ? '…' : '✕'}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
