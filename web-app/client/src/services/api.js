@@ -1,10 +1,16 @@
 import axios from 'axios';
 
+const NODE_BASE_URL = 'http://localhost:4000';
+
 const api = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: `${NODE_BASE_URL}/api`,
 });
 
-export const checkHealth = () => api.get('/health');
+// NOTE: /health is defined directly on the Node app (not under the /api
+// router), so it must be called at the root, not through the `api`
+// instance whose baseURL already includes /api — otherwise this resolves
+// to /api/health, which doesn't exist and returns 404.
+export const checkHealth = () => axios.get(`${NODE_BASE_URL}/health`);
 
 export const uploadDocument = (file, onProgress) => {
   const formData = new FormData();
