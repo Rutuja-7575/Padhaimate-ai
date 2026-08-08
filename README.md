@@ -149,18 +149,24 @@ The backend base URL is set in `lib/services/api_service.dart`. If you're runnin
 | GET | `/documents` | List uploaded documents and their chunk counts |
 | DELETE | `/documents/{filename}` | Remove a document and its chunks from the store |
 
+## Running tests
+
+Backend (mocks the Groq/embedding calls, so no API key or model download needed):
+
+```bash
+cd backend
+pip install -r requirements.txt
+python -m pytest app/tests/ -v
+```
+
 ## Known limitations / roadmap
 
 Being upfront about where this stands right now:
 
 - No authentication — anyone with the Node/FastAPI URL can upload/query/delete. Fine for local/demo use, not production-ready as-is.
-- FastAPI's own CORS is wide open (`allow_origins=["*"]`); the Node layer restricts *its* CORS to the client origin, but FastAPI is still reachable directly if someone finds the port.
+- FastAPI's CORS is now restricted to explicit origins via `ALLOWED_ORIGINS` (see `backend/.env.example`) instead of a wildcard, and the Node layer both sets security headers (`helmet`) and rate-limits the LLM-backed `/api/query` and `/api/upload` routes (20 req/min/IP).
 - PDF-only input, and only text-based PDFs (no OCR yet, so scanned/image PDFs won't extract text).
-- The Flutter app talks to FastAPI directly rather than going through the Node layer, so it doesn't get the rate limiting benefit yet.
-- No automated CI pipeline yet.
+- The Flutter app talks to FastAPI directly rather than going through the Node layer, so it doesn't get the rate-limiting benefit yet.
+- No automated CI pipeline yet (tests exist and pass locally, just not wired into GitHub Actions).
 
-Planned next: automated tests for both backend and Node layer, API key auth end-to-end, OCR fallback for scanned PDFs, and routing the Flutter app through the Node layer too.
-
-## License
-
-MIT
+Planned next: CI pipeline (GitHub Actions) running the test suite on every push, API key auth end-to-end, OCR fallback for scanned PDFs, and routing the Flutter app through the Node layer too.

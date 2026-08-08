@@ -67,6 +67,8 @@ class _ChatScreenState extends State<ChatScreen> {
     _tts.setErrorHandler((_) => setState(() => _speakingId = null));
   }
 
+  String _lastRecognizedWords = '';
+
   Future<void> _toggleListening() async {
     if (!_speechAvailable) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -76,22 +78,29 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
     if (_listening) {
+      // On web, finalResult often never fires automatically, so treat a
+      // manual stop as "done" and send whatever was captured so far.
       await _speech.stop();
       setState(() => _listening = false);
+      final text = _lastRecognizedWords.trim();
+      _lastRecognizedWords = '';
+      if (text.isNotEmpty) _ask(text);
       return;
     }
+    _lastRecognizedWords = '';
     setState(() => _listening = true);
     await _speech.listen(
       onResult: (result) {
+        _lastRecognizedWords = result.recognizedWords;
         if (result.finalResult) {
           final text = result.recognizedWords;
           setState(() => _listening = false);
+          _lastRecognizedWords = '';
           if (text.trim().isNotEmpty) _ask(text);
         }
       },
     );
   }
-
   Future<void> _speak(String text, int id) async {
     await _tts.stop();
     setState(() => _speakingId = id);

@@ -13,3 +13,7 @@ langchain-huggingface
 langchain-groq
 sentence-transformers
 chromadb==0.5.20
+
+# testing
+pytest
+httpx

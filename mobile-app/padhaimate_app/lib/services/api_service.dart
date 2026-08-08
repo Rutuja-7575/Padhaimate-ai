@@ -7,7 +7,7 @@ class ApiService {
   // - Android emulator: use 10.0.2.2 instead of localhost
   // - iOS simulator: localhost works fine
   // - physical device: use your computer's LAN IP, e.g. http://192.168.1.5:8000
-  static const String baseUrl = 'http://192.168.31.65:8000';
+  static const String baseUrl = 'http://localhost:8000';
 
   static Future<Map<String, dynamic>> checkHealth() async {
     final response = await http.get(Uri.parse('$baseUrl/health'));
